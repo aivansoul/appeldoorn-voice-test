@@ -147,14 +147,12 @@
 <div class="banner" id="banner"></div>
 
 <script>
-  // ───── CONFIGURATION SUPABASE (optionnel) ─────
-  // Pour activer le dashboard partagé entre testeurs, renseigne url + anonKey
-  // (anon public key, depuis Supabase > Settings > API).
-  // Puis exécute supabase-setup.sql sur le projet.
-  // Sans ça → mode local : chacun voit ses propres résultats.
+  // ───── CONFIGURATION SUPABASE (mode partagé activé) ─────
+  // Backend = projet Supabase AIForce Studio (séparé du voice agent : zéro impact RAG).
+  // Table : voice_agent_feedback · RLS stricte (anon = insert + select sur cette seule table).
   window.SUPABASE_CONFIG = {
-    url: "",
-    anonKey: "",
+    url: "https://ptusrbtnllomjfteqrcz.supabase.co",
+    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB0dXNyYnRubGxvbWpmdGVxcmN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwNzYyNTksImV4cCI6MjA1NTY1MjI1OX0.08qC1U_XWLyy2QQJGudyMRGZCpsbhoVKJD8bJ7YnGWQ",
     table: "voice_agent_feedback"
   };
 </script>
