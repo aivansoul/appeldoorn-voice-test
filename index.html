@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f5f5f7" />
+  <meta name="description" content="Test feedback — Appeldoorn Voice Agent. 230 questions, dashboard temps réel." />
+  <title>Appeldoorn Voice Agent · Test &amp; Feedback</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='url(%23g)'/%3E%3Ctext x='50' y='66' text-anchor='middle' font-family='-apple-system,sans-serif' font-size='52' font-weight='700' fill='white'%3EA%3C/text%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%235ac8fa'/%3E%3Cstop offset='1' stop-color='%230a84ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ───────── HEADER ───────── -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-dot">A</div>
+      <span>Appeldoorn · Voice Test</span>
+    </div>
+    <div class="header-stats">
+      <span><strong id="hs-tests">0</strong> testeurs</span>
+      <span><strong id="hs-questions">0</strong> retours</span>
+      <span class="mode-pill" id="mode-pill">local</span>
+    </div>
+  </div>
+</header>
+
+<!-- ───────── STICKY THEMES BAR ───────── -->
+<nav class="theme-bar" aria-label="Filtres par thème">
+  <div class="theme-bar-inner" id="pills"></div>
+</nav>
+
+<!-- ───────── HERO + DASHBOARD (POWER BI STYLE) ───────── -->
+<section class="hero">
+  <div class="hero-title">
+    <h1>Testez l'agent vocal Appeldoorn</h1>
+    <p>Appelez l'agent depuis le widget ou par téléphone, posez une question, notez la qualité de la réponse. Vos retours alimentent le dashboard temps réel ci-dessous.</p>
+  </div>
+
+  <div class="dashboard">
+    <div class="dash-head">
+      <div class="dash-title" id="dash-title-block">
+        <!-- icon injected by JS -->
+        <span>Performance temps réel</span>
+      </div>
+      <div class="dash-status" id="dash-status">
+        <span class="dot"></span>
+        <span id="dash-status-text">Mode local</span>
+      </div>
+    </div>
+    <div class="dash-grid" id="dash-grid"><!-- generated --></div>
+  </div>
+</section>
+
+<div class="container">
+  <div class="layout">
+    <main>
+
+      <!-- Tester ID -->
+      <section class="card">
+        <div class="card-head">
+          <div class="card-head-text">
+            <h2 id="head-tester"><!-- icon injected --> Votre identité de test</h2>
+            <p>Pour distinguer vos retours de ceux de vos collègues.</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label for="tester-name">Votre prénom (ou alias)</label>
+            <input type="text" id="tester-name" placeholder="Ex: Pascal, Geneviève, Pierre…" autocomplete="given-name" inputmode="text" />
+          </div>
+          <div class="field">
+            <label for="tester-channel">Canal utilisé pour tester</label>
+            <select id="tester-channel">
+              <option value="web">Widget web ElevenLabs</option>
+              <option value="phone">Téléphone (SIP, Phase 1c)</option>
+              <option value="text">Mode texte (playground)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Personas -->
+      <section class="card">
+        <div class="card-head">
+          <div class="card-head-text">
+            <h2 id="head-personas"><!-- icon injected --> Personas suggérés</h2>
+            <p>Inspirez-vous d'un profil. <strong>Cliquez sur un numéro de question</strong> pour la déplier directement ici, sans scroller.</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="persona-grid" id="persona-grid"></div>
+        </div>
+      </section>
+
+      <!-- Questions -->
+      <section class="card">
+        <div class="card-head">
+          <div class="card-head-text">
+            <h2 id="head-questions"><!-- icon injected --> Questions à poser</h2>
+            <p>Filtrez par thème ci-dessus, ou par sous-thème ci-dessous. Recherche par texte ou numéro.</p>
+          </div>
+        </div>
+        <div class="search-bar">
+          <div class="search-bar-wrap">
+            <svg class="ic ic-grey" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="search" id="search" placeholder="Rechercher une question ou un numéro…" inputmode="search" />
+          </div>
+        </div>
+        <div class="subcat-bar" id="subcat-bar"></div>
+        <div id="question-list"></div>
+      </section>
+
+      <footer>
+        Appeldoorn &amp; Associés · Voice Agent test · v1.1 · 230 questions
+      </footer>
+    </main>
+
+    <!-- ───────── ASIDE (desktop only) ───────── -->
+    <aside>
+      <section class="card">
+        <div class="card-head">
+          <div class="card-head-text">
+            <h2 id="head-actions"><!-- icon injected --> Actions</h2>
+            <p>Export et reset.</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="btn-row">
+            <button class="btn btn-secondary" id="btn-export">
+              <svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"/></svg>
+              Exporter CSV
+            </button>
+            <button class="btn btn-secondary" id="btn-reset" title="Réinitialiser uniquement vos retours locaux">
+              <svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
+              Reset local
+            </button>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+  </div>
+</div>
+
+<div class="banner" id="banner"></div>
+
+<script>
+  // ───── CONFIGURATION SUPABASE (optionnel) ─────
+  // Pour activer le dashboard partagé entre testeurs, renseigne url + anonKey
+  // (anon public key, depuis Supabase > Settings > API).
+  // Puis exécute supabase-setup.sql sur le projet.
+  // Sans ça → mode local : chacun voit ses propres résultats.
+  window.SUPABASE_CONFIG = {
+    url: "",
+    anonKey: "",
+    table: "voice_agent_feedback"
+  };
+</script>
+<script src="questions.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
