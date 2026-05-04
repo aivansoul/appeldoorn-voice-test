@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1d1d1f" />
+  <title>Appeldoorn · Supervisor View</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231d1d1f'/%3E%3Ccircle cx='50' cy='50' r='22' fill='none' stroke='%2334c759' stroke-width='6'/%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --bg: #0a0a0c; --surface: #161618; --surface-2: #1f1f22;
+      --line: #2c2c30; --text: #f5f5f7; --text-muted: #98989d;
+      --azure: #0a84ff; --green: #30d158; --orange: #ff9f0a; --red: #ff453a;
+      --shadow: 0 4px 16px rgba(0,0,0,0.4);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+           background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+    a { color: var(--azure); text-decoration: none; }
+    code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.9em;
+           background: var(--surface-2); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+
+    .header {
+      position: sticky; top: 0; z-index: 30;
+      background: rgba(22,22,24,0.92);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 18px; padding-top: calc(14px + env(safe-area-inset-top));
+    }
+    .header-inner { max-width: 1280px; margin: 0 auto; display: flex; align-items: center;
+                    justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; }
+    .live-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 100px;
+      background: rgba(48,209,88,0.15); color: var(--green);
+      font-size: 12px; font-weight: 500;
+    }
+    .live-pill .dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .live-pill.idle { background: rgba(152,152,157,0.15); color: var(--text-muted); }
+    .live-pill.idle .dot { background: var(--text-muted); animation: none; }
+
+    .container { max-width: 1280px; margin: 0 auto; padding: 16px 18px 60px; }
+
+    .auth-gate {
+      max-width: 420px; margin: 80px auto; padding: 24px;
+      background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+      box-shadow: var(--shadow); text-align: center;
+    }
+    .auth-gate h2 { margin: 0 0 12px; font-size: 18px; }
+    .auth-gate p { color: var(--text-muted); font-size: 13px; }
+    .auth-gate input { width: 100%; margin-top: 14px; padding: 12px 14px; font-size: 16px;
+                       background: var(--surface-2); border: 1px solid var(--line);
+                       border-radius: 10px; color: var(--text); font-family: inherit; }
+    .auth-gate input:focus { outline: none; border-color: var(--azure); }
+
+    .kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .kpi {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+      padding: 12px 14px; min-height: 76px;
+    }
+    .kpi .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase;
+                  letter-spacing: 0.05em; font-weight: 500; }
+    .kpi .value { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1;
+                  font-variant-numeric: tabular-nums; margin-top: 4px; }
+    .kpi .sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+    .kpi.green .value { color: var(--green); }
+    .kpi.orange .value { color: var(--orange); }
+    .kpi.red .value { color: var(--red); }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+      margin-bottom: 14px; overflow: hidden;
+    }
+    .card-head { padding: 14px 16px 10px; border-bottom: 1px solid var(--line);
+                 display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .card-head h2 { margin: 0; font-size: 14px; font-weight: 600; }
+    .card-head .meta { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+    .conv-list { padding: 4px 0; }
+    .conv {
+      padding: 12px 16px; border-top: 1px solid var(--line);
+      cursor: pointer; transition: background 0.12s;
+    }
+    .conv:first-child { border-top: 0; }
+    .conv:hover { background: var(--surface-2); }
+    .conv.selected { background: rgba(10,132,255,0.1); border-left: 3px solid var(--azure); }
+    .conv-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+                 margin-bottom: 4px; font-size: 12px; }
+    .conv-id { font-family: ui-monospace, monospace; color: var(--text-muted);
+               font-size: 11px; }
+    .conv-status {
+      padding: 2px 8px; border-radius: 100px; font-size: 10px; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .conv-status.in-progress { background: rgba(48,209,88,0.18); color: var(--green); }
+    .conv-status.done        { background: rgba(152,152,157,0.18); color: var(--text-muted); }
+    .conv-status.failed      { background: rgba(255,69,58,0.18); color: var(--red); }
+    .conv-meta { display: flex; gap: 12px; font-size: 11px; color: var(--text-muted);
+                 flex-wrap: wrap; }
+    .conv-meta strong { color: var(--text); }
+
+    .transcript { padding: 14px 16px; max-height: 60vh; overflow-y: auto; }
+    .turn { margin-bottom: 12px; }
+    .turn .role {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--text-muted); margin-bottom: 3px; font-weight: 500;
+    }
+    .turn.user .role { color: var(--azure); }
+    .turn.agent .role { color: var(--green); }
+    .turn .content {
+      background: var(--surface-2); padding: 10px 12px; border-radius: 10px;
+      font-size: 13.5px; line-height: 1.5;
+    }
+    .turn.user .content { border-left: 3px solid var(--azure); }
+    .turn.agent .content { border-left: 3px solid var(--green); }
+    .turn .tools { font-size: 11px; color: var(--text-muted); margin-top: 4px;
+                   font-family: ui-monospace, monospace; }
+    .turn .tools span { background: var(--surface-2); padding: 1px 6px;
+                        border-radius: 4px; margin-right: 4px; }
+
+    .empty {
+      padding: 32px 16px; text-align: center; color: var(--text-muted);
+      font-size: 13px;
+    }
+    .empty svg { display: block; margin: 0 auto 10px; opacity: 0.5; }
+
+    footer { text-align: center; font-size: 11px; color: var(--text-muted);
+             padding: 24px 16px 40px; }
+
+    @media (min-width: 720px) {
+      .kpi-row { grid-template-columns: repeat(4, 1fr); }
+      .kpi .value { font-size: 30px; }
+    }
+    @media (min-width: 1100px) {
+      .layout { display: grid; grid-template-columns: 380px 1fr; gap: 16px; align-items: start; }
+      .layout aside { position: sticky; top: 90px; max-height: calc(100vh - 110px); overflow-y: auto; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+    button:focus-visible, input:focus-visible {
+      outline: 2px solid var(--azure); outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">⚡ Appeldoorn · Supervisor</div>
+    <div class="live-pill" id="live-pill">
+      <span class="dot"></span>
+      <span id="live-text">connexion…</span>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div id="auth-gate" class="auth-gate" style="display:none">
+    <h2>Accès supervisor</h2>
+    <p>Cette page est protégée. Entre la clé d'accès fournie par Pascal.</p>
+    <input id="auth-key" type="password" placeholder="Clé d'accès" autocomplete="off" />
+  </div>
+
+  <div id="app" style="display:none">
+
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="label">Conversations live</div>
+        <div class="value" id="kpi-live">—</div>
+        <div class="sub">en cours</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Aujourd'hui</div>
+        <div class="value" id="kpi-today">—</div>
+        <div class="sub">total appels</div>
+      </div>
+      <div class="kpi green">
+        <div class="label">Durée moy.</div>
+        <div class="value" id="kpi-avg">—</div>
+        <div class="sub">minutes</div>
+      </div>
+      <div class="kpi orange">
+        <div class="label">Avec erreur</div>
+        <div class="value" id="kpi-err">—</div>
+        <div class="sub">24 dernières h</div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside>
+        <div class="card">
+          <div class="card-head">
+            <h2>Conversations récentes</h2>
+            <span class="meta" id="conv-count">—</span>
+          </div>
+          <div class="conv-list" id="conv-list">
+            <div class="empty">Chargement…</div>
+          </div>
+        </div>
+      </aside>
+
+      <main>
+        <div class="card">
+          <div class="card-head">
+            <h2 id="trans-title">Sélectionne une conversation</h2>
+            <span class="meta" id="trans-meta"></span>
+          </div>
+          <div class="transcript" id="transcript">
+            <div class="empty">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"/>
+              </svg>
+              Clique sur une conversation à gauche pour voir son transcript en temps réel.
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <footer>
+      Appeldoorn Voice Agent · Supervisor view · v1.0 · refresh 5 s
+    </footer>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ───── Configuration ─────
+// L'API key ElevenLabs ne doit JAMAIS être hard-codée ici.
+// L'utilisateur la saisit au login et elle reste en sessionStorage (perdue à la fermeture du navigateur).
+const ELEVENLABS_AGENT_ID = 'agent_2801kq9wze6rev39zzga92hsex3x';
+const REFRESH_MS = 5000;
+
+// ───── State ─────
+const state = {
+  apiKey: sessionStorage.getItem('appeldoorn_supervisor_key') || '',
+  conversations: [],
+  selectedId: null,
+  selectedTranscript: null,
+  pollInterval: null
+};
+
+// ───── DOM helpers ─────
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+function el(tag, attrs, kids) {
+  const n = document.createElement(tag);
+  if (attrs) Object.keys(attrs).forEach(k => {
+    if (k === 'class') n.className = attrs[k];
+    else if (k === 'text') n.textContent = attrs[k];
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2), attrs[k]);
+    else n.setAttribute(k, attrs[k]);
+  });
+  if (kids != null) (Array.isArray(kids) ? kids : [kids]).forEach(c => {
+    if (c == null) return;
+    n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  });
+  return n;
+}
+function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+// ───── ElevenLabs API ─────
+async function fetchConversations() {
+  const url = `https://api.elevenlabs.io/v1/convai/conversations?agent_id=${ELEVENLABS_AGENT_ID}&page_size=30`;
+  const res = await fetch(url, { headers: { 'xi-api-key': state.apiKey } });
+  if (!res.ok) throw new Error('API ' + res.status);
+  const data = await res.json();
+  return data.conversations || [];
+}
+
+async function fetchConversation(id) {
+  const url = `https://api.elevenlabs.io/v1/convai/conversations/${id}`;
+  const res = await fetch(url, { headers: { 'xi-api-key': state.apiKey } });
+  if (!res.ok) throw new Error('API ' + res.status);
+  return res.json();
+}
+
+// ───── Render ─────
+function fmtDuration(s) {
+  if (!s && s !== 0) return '—';
+  const m = Math.floor(s / 60);
+  const r = Math.floor(s % 60);
+  return m + ':' + String(r).padStart(2, '0');
+}
+
+function fmtTimeAgo(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const ago = Date.now() - d.getTime();
+  if (ago < 60000) return 'à l\'instant';
+  if (ago < 3600000) return Math.floor(ago / 60000) + ' min';
+  if (ago < 86400000) return Math.floor(ago / 3600000) + ' h';
+  return d.toLocaleDateString('fr-BE');
+}
+
+function statusClass(status) {
+  if (status === 'in-progress' || status === 'in_progress') return 'in-progress';
+  if (status === 'failed' || status === 'error') return 'failed';
+  return 'done';
+}
+
+function renderKPIs() {
+  const live = state.conversations.filter(c => (c.status || '').toLowerCase().includes('progress')).length;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayCount = state.conversations.filter(c => new Date((c.start_time_unix_secs || 0) * 1000) >= today).length;
+  const completedToday = state.conversations.filter(c => new Date((c.start_time_unix_secs || 0) * 1000) >= today && c.call_duration_secs);
+  const avgSec = completedToday.length
+    ? completedToday.reduce((a, c) => a + (c.call_duration_secs || 0), 0) / completedToday.length
+    : 0;
+  const errors24h = state.conversations.filter(c => {
+    const ts = (c.start_time_unix_secs || 0) * 1000;
+    if (Date.now() - ts > 86400000) return false;
+    return (c.status || '').toLowerCase() === 'failed';
+  }).length;
+
+  $('#kpi-live').textContent = live;
+  $('#kpi-today').textContent = todayCount;
+  $('#kpi-avg').textContent = avgSec ? (avgSec / 60).toFixed(1) : '—';
+  $('#kpi-err').textContent = errors24h;
+}
+
+function renderConvList() {
+  const wrap = $('#conv-list');
+  clear(wrap);
+  if (state.conversations.length === 0) {
+    wrap.appendChild(el('div', { class: 'empty', text: 'Aucune conversation pour l\'instant.' }));
+    return;
+  }
+  state.conversations.forEach(c => {
+    const id = c.conversation_id;
+    const node = el('div', {
+      class: 'conv' + (state.selectedId === id ? ' selected' : ''),
+      'data-id': id
+    });
+    const head = el('div', { class: 'conv-head' });
+    head.appendChild(el('span', { class: 'conv-status ' + statusClass(c.status), text: (c.status || 'unknown').replace('_', ' ') }));
+    head.appendChild(el('span', { class: 'conv-id', text: id.slice(-12) }));
+    node.appendChild(head);
+
+    const meta = el('div', { class: 'conv-meta' });
+    meta.appendChild(el('span', null, [document.createTextNode('⏱ '), el('strong', { text: fmtDuration(c.call_duration_secs) })]));
+    meta.appendChild(el('span', null, [document.createTextNode('🕐 '), el('strong', { text: fmtTimeAgo(new Date((c.start_time_unix_secs || 0) * 1000).toISOString()) })]));
+    if (c.message_count) meta.appendChild(el('span', null, [document.createTextNode('💬 '), el('strong', { text: c.message_count + ' tours' })]));
+    node.appendChild(meta);
+
+    node.addEventListener('click', () => {
+      state.selectedId = id;
+      renderConvList();
+      loadTranscript(id);
+    });
+    wrap.appendChild(node);
+  });
+  $('#conv-count').textContent = state.conversations.length;
+}
+
+async function loadTranscript(id) {
+  $('#trans-title').textContent = 'Chargement…';
+  $('#trans-meta').textContent = '';
+  clear($('#transcript'));
+
+  try {
+    const data = await fetchConversation(id);
+    state.selectedTranscript = data;
+    renderTranscript(data);
+  } catch (e) {
+    clear($('#transcript'));
+    $('#transcript').appendChild(el('div', { class: 'empty', text: 'Erreur : ' + e.message }));
+  }
+}
+
+function renderTranscript(data) {
+  $('#trans-title').textContent = 'Conversation ' + (data.conversation_id || '').slice(-12);
+  $('#trans-meta').textContent = (data.status || '') + ' · ' + fmtDuration(data.metadata && data.metadata.call_duration_secs);
+
+  const wrap = $('#transcript');
+  clear(wrap);
+
+  const transcript = data.transcript || [];
+  if (transcript.length === 0) {
+    wrap.appendChild(el('div', { class: 'empty', text: 'Pas encore de tour de parole.' }));
+    return;
+  }
+
+  transcript.forEach(t => {
+    const role = t.role === 'user' ? 'user' : 'agent';
+    const turn = el('div', { class: 'turn ' + role });
+    turn.appendChild(el('div', { class: 'role', text: role === 'user' ? 'Appelant' : 'Agent' }));
+    if (t.message) turn.appendChild(el('div', { class: 'content', text: t.message }));
+    if (t.tool_calls && t.tool_calls.length) {
+      const tools = el('div', { class: 'tools' });
+      t.tool_calls.forEach(tc => {
+        tools.appendChild(el('span', { text: '🔧 ' + (tc.tool_name || tc.type || 'tool') }));
+      });
+      turn.appendChild(tools);
+    }
+    wrap.appendChild(turn);
+  });
+
+  // Auto-scroll si l'utilisateur ne scrolle pas activement
+  if (wrap.dataset.autoscroll !== 'false') {
+    wrap.scrollTop = wrap.scrollHeight;
+  }
+}
+
+// ───── Polling loop ─────
+async function tick() {
+  try {
+    state.conversations = await fetchConversations();
+    renderKPIs();
+    renderConvList();
+    setLive(true);
+
+    if (state.selectedId) {
+      // Refresh selected transcript too
+      try {
+        const d = await fetchConversation(state.selectedId);
+        state.selectedTranscript = d;
+        renderTranscript(d);
+      } catch (e) { /* silent */ }
+    }
+  } catch (e) {
+    console.warn('tick', e);
+    setLive(false, e.message);
+  }
+}
+
+function setLive(ok, msg) {
+  const pill = $('#live-pill');
+  const txt = $('#live-text');
+  if (ok) {
+    pill.classList.remove('idle');
+    txt.textContent = 'live';
+  } else {
+    pill.classList.add('idle');
+    txt.textContent = msg || 'déconnecté';
+  }
+}
+
+// ───── Auth gate ─────
+function showApp() {
+  $('#auth-gate').style.display = 'none';
+  $('#app').style.display = 'block';
+  tick();
+  state.pollInterval = setInterval(tick, REFRESH_MS);
+}
+
+function showGate() {
+  $('#app').style.display = 'none';
+  $('#auth-gate').style.display = 'block';
+  setTimeout(() => $('#auth-key').focus(), 0);
+}
+
+function init() {
+  if (state.apiKey) {
+    showApp();
+  } else {
+    showGate();
+  }
+  $('#auth-key').addEventListener('keydown', async e => {
+    if (e.key === 'Enter') {
+      const v = e.target.value.trim();
+      if (!v) return;
+      // Test the key by trying a fetch
+      state.apiKey = v;
+      try {
+        await fetchConversations();
+        sessionStorage.setItem('appeldoorn_supervisor_key', v);
+        showApp();
+      } catch (err) {
+        e.target.value = '';
+        e.target.placeholder = 'Clé invalide — réessaie';
+        state.apiKey = '';
+      }
+    }
+  });
+  // Disable auto-scroll if user scrolls up
+  document.addEventListener('scroll', e => {
+    const wrap = $('#transcript');
+    if (!wrap) return;
+    wrap.dataset.autoscroll = (wrap.scrollTop + wrap.clientHeight + 100 >= wrap.scrollHeight) ? 'true' : 'false';
+  }, { passive: true, capture: true });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
