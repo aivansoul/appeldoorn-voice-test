@@ -28,6 +28,19 @@
   --radius: 14px;
   --radius-sm: 10px;
   --radius-xs: 8px;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* ─── JetBrains Mono pour TOUS les headers/titres ─── */
+.logo-title,
+.hero-title h1,
+.card-head h2,
+.dash-section-title,
+.dash-chart-title,
+.dist-pill,
+.dist-total,
+.dist-stat .v {
+  font-family: var(--font-mono);
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -75,34 +88,46 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 }
 .header-inner { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
 .logo {
-  display: inline-flex; align-items: center; gap: 12px;
+  display: inline-flex; align-items: center; gap: 14px;
   background: transparent; border: 0; padding: 4px 6px;
   cursor: pointer;
   font-family: inherit;
-  border-radius: 12px;
+  border-radius: 14px;
   transition: background 0.15s;
 }
 .logo:hover { background: rgba(255, 255, 255, 0.4); }
 .logo:active { transform: scale(0.97); }
 .logo-dot {
-  width: 32px; height: 32px;
+  width: 42px; height: 42px;
   background: linear-gradient(135deg, var(--azure), var(--azure-deep));
-  border-radius: 9px;
+  border-radius: 12px;
   display: inline-flex; align-items: center; justify-content: center;
-  color: white; font-weight: 800; font-size: 16px;
-  box-shadow: 0 2px 8px rgba(10, 132, 255, 0.35);
+  color: white; font-weight: 800; font-size: 22px;
+  box-shadow: 0 2px 12px rgba(10, 132, 255, 0.4);
+  font-family: var(--font-mono);
+  letter-spacing: 0;
 }
 .logo-title {
-  font-size: 14px; font-weight: 800; letter-spacing: 0.12em;
+  font-size: 22px; font-weight: 800; letter-spacing: 0.10em;
   color: white;
-  text-shadow: 0 1px 4px rgba(0, 60, 130, 0.25);
+  text-shadow: 0 2px 10px rgba(0, 60, 130, 0.30), 0 1px 2px rgba(0, 60, 140, 0.2);
   text-transform: uppercase;
+  line-height: 1;
+}
+@media (min-width: 720px) {
+  .logo-dot { width: 50px; height: 50px; font-size: 26px; border-radius: 14px; }
+  .logo-title { font-size: 28px; }
+}
+@media (min-width: 1100px) {
+  .logo-dot { width: 56px; height: 56px; font-size: 30px; }
+  .logo-title { font-size: 34px; }
 }
 
 /* ───── STICKY THEMES BAR ───── */
 .theme-bar {
   position: sticky;
-  top: calc(53px + env(safe-area-inset-top));
+  /* Header logo 42px + padding 12+12 ≈ 66 → on cale juste en dessous */
+  top: calc(66px + env(safe-area-inset-top));
   z-index: 30;
   background: rgba(227, 241, 255, 0.65);
   backdrop-filter: saturate(180%) blur(20px);
@@ -110,6 +135,8 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
   border-bottom: 1px solid rgba(255, 255, 255, 0.5);
   padding: 10px 0;
 }
+@media (min-width: 720px)  { .theme-bar { top: calc(74px + env(safe-area-inset-top)); } }
+@media (min-width: 1100px) { .theme-bar { top: calc(82px + env(safe-area-inset-top)); } }
 .pill {
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.6);
@@ -118,12 +145,20 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 }
 .theme-bar-inner {
   max-width: 1280px; margin: 0 auto;
-  display: flex; gap: 6px;
+  display: flex; gap: 8px;
   padding: 0 16px;
   overflow-x: auto;
   scroll-snap-type: x proximity;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  /* Centre les pills horizontalement dans la sticky bar */
+  justify-content: center;
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+/* Sur très petits écrans le wrap peut prendre 2 lignes ; sur ≥720px tout tient sur 1 */
+@media (min-width: 720px) {
+  .theme-bar-inner { flex-wrap: nowrap; }
 }
 .theme-bar-inner::-webkit-scrollbar { display: none; }
 
@@ -676,17 +711,18 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
     transition: box-shadow 0.25s ease;
     /* La hauteur des cartes en flux fournit la distance de scroll */
   }
-  /* z-index croissant : la carte la plus récente passe par-dessus */
-  .persona:nth-child(1)  { top: 110px; z-index: 1; }
-  .persona:nth-child(2)  { top: 124px; z-index: 2; }
-  .persona:nth-child(3)  { top: 138px; z-index: 3; }
-  .persona:nth-child(4)  { top: 152px; z-index: 4; }
-  .persona:nth-child(5)  { top: 166px; z-index: 5; }
-  .persona:nth-child(6)  { top: 180px; z-index: 6; }
-  .persona:nth-child(7)  { top: 194px; z-index: 7; }
-  .persona:nth-child(8)  { top: 208px; z-index: 8; }
-  .persona:nth-child(9)  { top: 222px; z-index: 9; }
-  .persona:nth-child(10) { top: 236px; z-index: 10; }
+  /* z-index croissant : la carte la plus récente passe par-dessus
+     top base = header (66) + theme-bar (~58) + 10 marge = 134 */
+  .persona:nth-child(1)  { top: 134px; z-index: 1; }
+  .persona:nth-child(2)  { top: 148px; z-index: 2; }
+  .persona:nth-child(3)  { top: 162px; z-index: 3; }
+  .persona:nth-child(4)  { top: 176px; z-index: 4; }
+  .persona:nth-child(5)  { top: 190px; z-index: 5; }
+  .persona:nth-child(6)  { top: 204px; z-index: 6; }
+  .persona:nth-child(7)  { top: 218px; z-index: 7; }
+  .persona:nth-child(8)  { top: 232px; z-index: 8; }
+  .persona:nth-child(9)  { top: 246px; z-index: 9; }
+  .persona:nth-child(10) { top: 260px; z-index: 10; }
   /* Quand une persona vient de se "stick", on renforce l'ombre pour signaler la profondeur */
   .persona { box-shadow: 0 12px 36px rgba(10, 80, 160, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.7); }
   .persona.has-expanded {
@@ -813,7 +849,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 18px;
   padding: 14px 18px;
-  scroll-margin-top: 130px;
+  scroll-margin-top: 150px;
   box-shadow: 0 4px 18px rgba(10, 80, 160, 0.08);
 }
 .question.flash { animation: flash 1.4s ease; }
