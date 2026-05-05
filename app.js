@@ -537,13 +537,33 @@
     body.appendChild(rings);
 
     tile.appendChild(body);
+
+    // ── ANIMATIONS POST-MOUNT ──
+    // (le tile sera attaché au DOM par le caller ; on planifie après le prochain paint)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        // 1. Anneaux : passer de offset=full à offset=target → CSS transition anime
+        rings.querySelectorAll('.dist-ring-fill[data-target-offset]').forEach(el => {
+          el.setAttribute('stroke-dashoffset', el.getAttribute('data-target-offset'));
+        });
+        // 2. Chiffres : count-up de 0 à target
+        stats.querySelectorAll('.num[data-target]').forEach(node => {
+          const tgt = parseInt(node.getAttribute('data-target'), 10) || 0;
+          if (tgt > 0) animateNumber(node, tgt, 900);
+        });
+      });
+    });
+
     return tile;
   }
 
   function makeDistStat(kind, n, pct, label) {
     const stat = el('div', { class: 'dist-stat ' + kind });
     const v = el('div', { class: 'v' });
-    v.appendChild(document.createTextNode(String(n)));
+    // .num gets count-up animation; .pct stays static
+    const num = el('span', { class: 'num', text: '0' });
+    num.setAttribute('data-target', String(n));
+    v.appendChild(num);
     if (n > 0) v.appendChild(el('span', { class: 'pct', text: ' · ' + pct + '%' }));
     stat.appendChild(v);
     const l = el('div', { class: 'l' });
@@ -551,6 +571,21 @@
     l.appendChild(document.createTextNode(label));
     stat.appendChild(l);
     return stat;
+  }
+
+  // Count-up animation : monte de 0 à `target` en `duration` ms
+  function animateNumber(node, target, duration) {
+    const start = performance.now();
+    const ease = t => 1 - Math.pow(1 - t, 3); // easeOutCubic
+    function step(now) {
+      const elapsed = now - start;
+      const t = Math.min(1, elapsed / duration);
+      const value = Math.round(ease(t) * target);
+      node.textContent = String(value);
+      if (t < 1) requestAnimationFrame(step);
+      else node.textContent = String(target);
+    }
+    requestAnimationFrame(step);
   }
 
   function buildRingsSVG(goodPct, medPct, badPct, total) {
@@ -570,12 +605,13 @@
       // Track (slightly visible white ring)
       svg += '<circle class="dist-ring-track" cx="90" cy="90" r="' + c.r +
              '" stroke="rgba(255,255,255,0.25)" stroke-width="' + c.sw + '" />';
-      // Fill (only render if there's a value)
+      // Fill : on commence à offset = circumference (vide) puis on anime vers `off`.
       if (total > 0 && c.pct > 0) {
         svg += '<circle class="dist-ring-fill" cx="90" cy="90" r="' + c.r +
                '" stroke="' + c.color + '" stroke-width="' + c.sw +
                '" stroke-dasharray="' + circ.toFixed(1) +
-               '" stroke-dashoffset="' + off.toFixed(1) +
+               '" stroke-dashoffset="' + circ.toFixed(1) +
+               '" data-target-offset="' + off.toFixed(1) +
                '" filter="url(#neonGlow)" />';
       }
     });
