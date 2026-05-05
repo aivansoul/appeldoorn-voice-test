@@ -18,8 +18,8 @@
   --azure-tint: #f0f7ff;
   --green: #34c759;
   --green-soft: #e8f8ee;
-  --orange: #ff9500;
-  --orange-soft: #fff4e3;
+  --orange: #ffcc00;          /* renommé fonctionnellement « jaune » — remplace l'ancien orange */
+  --orange-soft: #fff4c8;     /* tint jaune doux */
   --red: #ff3b30;
   --red-soft: #ffe9e8;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -273,7 +273,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 .dash-tile.dist-hero { grid-column: 1 / -1; }
 .dash-tile {
   position: relative;
-  padding: 20px 20px;
+  padding: 1.25rem; /* 20px ≥ 1rem */
   min-height: 100px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.62);
@@ -558,7 +558,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 /* Theme palette (extends initial palette with purple + yellow) */
 .cat-color-appeldoorn  { background: #0a84ff; } /* azure-deep */
 .cat-color-crelan_part { background: #34c759; } /* green */
-.cat-color-crelan_pro  { background: #ff9500; } /* orange */
+.cat-color-crelan_pro  { background: #14b8a6; } /* teal — distinct du jaune Assurance */
 .cat-color-crelan_coop { background: #af52de; } /* purple */
 .cat-color-assurance   { background: #ffcc00; } /* yellow */
 .cat-color-trick       { background: #ff3b30; } /* red */
@@ -567,11 +567,11 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 .cat-color-assurance .cat-icon { background: rgba(0,0,0,0.12); }
 
 /* Testers leaderboard — light glass pills */
-.testers-list { display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+.testers-list { display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
 .testers-list .row {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 12px;
   font-size: 13px;
-  padding: 10px 14px;
+  padding: 1rem 1.125rem; /* ≥ 1rem */
   background: rgba(245, 248, 252, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 100px;
@@ -627,7 +627,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 }
 /* Opt-in : sections sans contenu glass nested (ex: Tester ID form) */
 .card.card--solid .card-body {
-  padding: 18px 18px;
+  padding: 1.25rem; /* 20px ≥ 1rem */
   background: rgba(255, 255, 255, 0.62);
   backdrop-filter: saturate(180%) blur(24px);
   -webkit-backdrop-filter: saturate(180%) blur(24px);
@@ -646,7 +646,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
   border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 22px;
   margin-top: 10px;
-  padding: 14px 16px !important;
+  padding: 1rem 1.125rem !important; /* ≥ 1rem */
 }
 .card #question-list {
   background: transparent;
@@ -677,7 +677,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 .persona {
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 22px;
-  padding: 16px 18px;
+  padding: 1.125rem 1.25rem; /* 18px / 20px ≥ 1rem */
   background: rgba(255, 255, 255, 0.62);
   backdrop-filter: saturate(180%) blur(24px);
   -webkit-backdrop-filter: saturate(180%) blur(24px);
@@ -732,12 +732,12 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 }
 
 .persona-contact {
-  display: grid; grid-template-columns: 1fr; gap: 6px;
-  background: var(--card);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-xs);
-  padding: 8px 10px;
-  margin-bottom: 10px;
+  display: grid; grid-template-columns: 1fr; gap: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 14px;
+  padding: 1rem; /* ≥ 1rem */
+  margin-bottom: 12px;
 }
 .persona-contact .item {
   display: flex; align-items: center; gap: 8px;
@@ -758,7 +758,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 }
 .diff-facile     { background: var(--green-soft); color: #1b5e20; }
 .diff-moyen      { background: var(--azure-soft); color: #0a4d8c; }
-.diff-difficile  { background: var(--orange-soft); color: #b35d00; }
+.diff-difficile  { background: var(--orange-soft); color: #8a6500; }
 .diff-très       { background: var(--red-soft); color: #b71c1c; }
 .diff-extrême    { background: #2c2c2e; color: #ff453a; }
 .diff-na         { background: var(--bg-2); color: var(--text-muted); }
@@ -848,7 +848,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
   -webkit-backdrop-filter: saturate(180%) blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 18px;
-  padding: 14px 18px;
+  padding: 1rem 1.125rem; /* 16px / 18px ≥ 1rem */
   scroll-margin-top: 150px;
   box-shadow: 0 4px 18px rgba(10, 80, 160, 0.08);
 }
@@ -864,7 +864,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 16px;
-  padding: 12px 14px;
+  padding: 1rem 1rem; /* ≥ 1rem partout */
   box-shadow: 0 6px 18px rgba(10, 80, 160, 0.10);
 }
 .question-head {
@@ -925,7 +925,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 
 .rate-btn[data-r="good"].selected      { background: var(--green-soft); border-color: var(--green); color: #145824; }
 .rate-btn[data-r="good"].selected .ic  { stroke: var(--green); }
-.rate-btn[data-r="medium"].selected    { background: var(--orange-soft); border-color: var(--orange); color: #8a4500; }
+.rate-btn[data-r="medium"].selected    { background: var(--orange-soft); border-color: var(--orange); color: #6b5200; }
 .rate-btn[data-r="medium"].selected .ic{ stroke: var(--orange); }
 .rate-btn[data-r="missing"].selected   { background: var(--azure-soft); border-color: var(--azure-deep); color: #0a4d8c; }
 .rate-btn[data-r="missing"].selected .ic{ stroke: var(--azure-deep); }
@@ -957,10 +957,10 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 
 .warning-banner {
   background: var(--orange-soft);
-  border: 1px solid #ffdba0;
-  color: #6a3e00;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
+  border: 1px solid #ffe680;
+  color: #6b5200;
+  padding: 1rem 1.125rem;
+  border-radius: 14px;
   margin-bottom: 12px;
   font-size: 12.5px;
   display: flex; align-items: center; gap: 10px;
