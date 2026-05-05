@@ -18,8 +18,8 @@
   --azure-tint: #f0f7ff;
   --green: #34c759;
   --green-soft: #e8f8ee;
-  --orange: #fff200;          /* JAUNE NÉON (identique à l'anneau Moyen de la distribution) */
-  --orange-soft: #fffbcc;     /* tint néon ultra clair */
+  --orange: #fbff00;          /* JAUNE NÉON (couleur unique pour bars + KPI) */
+  --orange-soft: #fdffe0;     /* tint néon ultra clair */
   --red: #ff3b30;
   --red-soft: #ffe9e8;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -147,18 +147,21 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
   max-width: 1280px; margin: 0 auto;
   display: flex; gap: 8px;
   padding: 0 16px;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  /* Centre les pills horizontalement dans la sticky bar */
-  justify-content: center;
-  flex-wrap: wrap;
-  row-gap: 8px;
+  /* Mobile : scroll horizontal glissant (slidable, départ aligné à gauche) */
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
 }
-/* Sur très petits écrans le wrap peut prendre 2 lignes ; sur ≥720px tout tient sur 1 */
+/* Desktop : tout fixé, centré, pas de scroll */
 @media (min-width: 720px) {
-  .theme-bar-inner { flex-wrap: nowrap; }
+  .theme-bar-inner {
+    overflow-x: visible;
+    justify-content: center;
+    scroll-snap-type: none;
+  }
 }
 .theme-bar-inner::-webkit-scrollbar { display: none; }
 
@@ -319,16 +322,18 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 .kpi-tile.green  .label .ic { stroke: var(--green) !important; }
 .kpi-tile.orange .value {
   color: var(--orange);
-  /* Outline + glow pour lisibilité du néon sur glass clair */
-  text-shadow:
-    -1px -1px 0 rgba(120, 90, 0, 0.5),
-     1px -1px 0 rgba(120, 90, 0, 0.5),
-    -1px  1px 0 rgba(120, 90, 0, 0.5),
-     1px  1px 0 rgba(120, 90, 0, 0.5),
-     0 0 16px rgba(255, 220, 0, 0.55);
+  text-shadow: none; /* pas d'outline */
 }
 .kpi-tile.orange .label .ic { stroke: #b88600 !important; }
 .kpi-tile.orange .label { color: #6b5200; }
+/* Tile « Pas d'info » : background SOLIDE (non-transparent) pour garder
+   le contraste avec le néon jaune du gros chiffre */
+.dash-tile.kpi-tile.orange {
+  background: #ffffff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
 .kpi-tile.red    .value { color: var(--red); }
 .kpi-tile.red    .label .ic { stroke: var(--red) !important; }
 
@@ -524,7 +529,8 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 }
 .cat-row .cat-bar-wrap {
   display: flex; align-items: center; gap: 12px;
-  background: rgba(245, 248, 252, 0.6);
+  /* Track SOLIDE (non-transparent) : maintient le contraste pour les barres jaunes néon */
+  background: #f0f4f8;
   border-radius: 100px;
   padding: 4px;
   position: relative;
@@ -568,14 +574,17 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 /* Theme palette (extends initial palette with purple + yellow) */
 .cat-color-appeldoorn  { background: #0a84ff; } /* azure-deep */
 .cat-color-crelan_part { background: #34c759; } /* green */
-.cat-color-crelan_pro  { background: #fff200; } /* JAUNE NÉON (remplace l'orange) */
+.cat-color-crelan_pro  { background: #fbff00; } /* JAUNE NÉON (solide, non-transparent) */
 .cat-color-crelan_coop { background: #af52de; } /* purple */
-.cat-color-assurance   { background: #14b8a6; } /* teal (cédé sa place de jaune au crelan_pro) */
+.cat-color-assurance   { background: #fbff00; } /* JAUNE NÉON aussi (cf. demande user) */
 .cat-color-trick       { background: #ff3b30; } /* red */
 /* Le néon jaune nécessite un texte/icône foncé pour rester lisible sur la barre */
-.cat-color-crelan_pro .cat-fill-text { color: #5a4500; }
-.cat-color-crelan_pro .cat-icon .ic { stroke: #5a4500; }
-.cat-color-crelan_pro .cat-icon { background: rgba(0,0,0,0.18); }
+.cat-color-crelan_pro .cat-fill-text,
+.cat-color-assurance  .cat-fill-text { color: #5a4500; }
+.cat-color-crelan_pro .cat-icon .ic,
+.cat-color-assurance  .cat-icon .ic { stroke: #5a4500; }
+.cat-color-crelan_pro .cat-icon,
+.cat-color-assurance  .cat-icon { background: rgba(0,0,0,0.18); }
 
 /* Testers leaderboard — light glass pills */
 .testers-list { display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
