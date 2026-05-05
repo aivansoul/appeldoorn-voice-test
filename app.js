@@ -554,28 +554,38 @@
   }
 
   function buildRingsSVG(goodPct, medPct, badPct, total) {
-    // 3 concentric rings (outer = good/green, middle = medium/orange, inner = bad/red)
+    // 3 concentric rings : extérieur = Bien (azure néon),
+    //                     milieu     = Moyen (jaune néon),
+    //                     intérieur  = Pb sérieux (rouge néon)
     const config = [
-      { r: 70, sw: 16, color: 'var(--green)',  pct: goodPct, key: 'good'   },
-      { r: 50, sw: 16, color: 'var(--orange)', pct: medPct,  key: 'medium' },
-      { r: 30, sw: 16, color: 'var(--red)',    pct: badPct,  key: 'bad'    }
+      { r: 70, sw: 16, color: '#00d4ff', pct: goodPct, key: 'good'   }, // neon azure cyan
+      { r: 50, sw: 16, color: '#fff200', pct: medPct,  key: 'medium' }, // neon yellow
+      { r: 30, sw: 16, color: '#ff073a', pct: badPct,  key: 'bad'    }  // neon red
     ];
     let svg = '<svg viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">';
     config.forEach(c => {
       const circ = 2 * Math.PI * c.r;
       const dash = total ? circ * (c.pct / 100) : 0;
       const off  = total ? circ - dash : circ;
-      // Track
+      // Track (slightly visible white ring)
       svg += '<circle class="dist-ring-track" cx="90" cy="90" r="' + c.r +
-             '" stroke="' + c.color + '" stroke-opacity="0.18" stroke-width="' + c.sw + '" />';
+             '" stroke="rgba(255,255,255,0.25)" stroke-width="' + c.sw + '" />';
       // Fill (only render if there's a value)
       if (total > 0 && c.pct > 0) {
         svg += '<circle class="dist-ring-fill" cx="90" cy="90" r="' + c.r +
                '" stroke="' + c.color + '" stroke-width="' + c.sw +
                '" stroke-dasharray="' + circ.toFixed(1) +
-               '" stroke-dashoffset="' + off.toFixed(1) + '" />';
+               '" stroke-dashoffset="' + off.toFixed(1) +
+               '" filter="url(#neonGlow)" />';
       }
     });
+    // Add SVG filter for neon glow effect
+    svg = svg.replace('<svg viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">',
+      '<svg viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">' +
+      '<defs><filter id="neonGlow" x="-30%" y="-30%" width="160%" height="160%">' +
+      '<feGaussianBlur stdDeviation="2.2" result="blur"/>' +
+      '<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>' +
+      '</filter></defs>');
     svg += '</svg>';
     return svg;
   }
@@ -592,10 +602,10 @@
   // CATEGORY BARS (style image 2 — icone + bar coloré + count)
   // ═══════════════════════════════════════════════════════════
   function qualityBarTile(rows) {
-    const tile = el('div', { class: 'dash-tile dash-chart span-2' }, [
-      el('div', { class: 'dash-chart-title', text: 'Qualité par thème' }),
-      el('div', { class: 'dash-chart-sub',   text: '% « BIEN » SUR LES QUESTIONS NOTÉES' })
-    ]);
+    const wrap = el('div', { class: 'dash-section span-4' });
+    wrap.appendChild(el('h3',  { class: 'dash-section-title', text: 'Qualité par thème' }));
+    wrap.appendChild(el('div', { class: 'dash-section-sub',   text: '% « BIEN » SUR LES QUESTIONS NOTÉES' }));
+    const tile = el('div', { class: 'dash-tile dash-chart' });
     const list = el('div', { class: 'cat-list' });
     Object.keys(CATS).forEach(catKey => {
       const inCat = rows.filter(r => r.category === catKey);
@@ -610,14 +620,15 @@
       }));
     });
     tile.appendChild(list);
-    return tile;
+    wrap.appendChild(tile);
+    return wrap;
   }
 
   function coverageBarTile(rows) {
-    const tile = el('div', { class: 'dash-tile dash-chart span-2' }, [
-      el('div', { class: 'dash-chart-title', text: 'Couverture par thème' }),
-      el('div', { class: 'dash-chart-sub',   text: 'QUESTIONS TESTÉES / DISPONIBLES' })
-    ]);
+    const wrap = el('div', { class: 'dash-section span-4' });
+    wrap.appendChild(el('h3',  { class: 'dash-section-title', text: 'Couverture par thème' }));
+    wrap.appendChild(el('div', { class: 'dash-section-sub',   text: 'QUESTIONS TESTÉES / DISPONIBLES' }));
+    const tile = el('div', { class: 'dash-tile dash-chart' });
     const list = el('div', { class: 'cat-list' });
     Object.keys(CATS).forEach(catKey => {
       const totalCat = QUESTIONS.filter(q => q.cat === catKey).length;
@@ -634,7 +645,8 @@
       }));
     });
     tile.appendChild(list);
-    return tile;
+    wrap.appendChild(tile);
+    return wrap;
   }
 
   // Single category bar row (image 2 style)
@@ -658,9 +670,9 @@
   }
 
   function testersTile() {
-    const tile = el('div', { class: 'dash-tile dash-chart span-4' }, [
-      el('div', { class: 'dash-chart-title', text: 'Top testeurs' })
-    ]);
+    const wrap = el('div', { class: 'dash-section span-4' });
+    wrap.appendChild(el('h3', { class: 'dash-section-title', text: 'Top testeurs' }));
+    const tile = el('div', { class: 'dash-tile dash-chart' });
     const list = el('div', { class: 'testers-list' });
     const sorted = Object.keys(state.aggregate.byTester)
       .map(name => [name, state.aggregate.byTester[name]])
@@ -678,7 +690,8 @@
       });
     }
     tile.appendChild(list);
-    return tile;
+    wrap.appendChild(tile);
+    return wrap;
   }
 
   function _legacy_barRow_unused(label, pct, valueLabel, colorClass) {
@@ -692,10 +705,16 @@
   }
 
   function renderHeaderStats() {
-    $('#hs-tests').textContent = Object.keys(state.aggregate.byTester).length;
-    $('#hs-questions').textContent = state.aggregate.rows.length;
-    $('#mode-pill').textContent = SHARED ? 'partagé' : 'local';
-    $('#mode-pill').classList.toggle('shared', SHARED);
+    // Header simplifié : plus de compteurs visibles. Stub conservé pour
+    // compatibilité avec les anciens points d'appel (no-op safe).
+  }
+
+  function bindLogoHome() {
+    const btn = document.getElementById('logo-home');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   }
 
   // ───── Mode warning ─────
@@ -750,6 +769,7 @@
 
   // ───── Init ─────
   async function init() {
+    bindLogoHome();
     injectCardIcons();
     bindTester();
     renderPills();

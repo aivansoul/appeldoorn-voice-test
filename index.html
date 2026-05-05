@@ -14,15 +14,10 @@
 <!-- ───────── HEADER ───────── -->
 <header class="header">
   <div class="header-inner">
-    <div class="logo">
-      <div class="logo-dot">A</div>
-      <span>Appeldoorn · Voice Test</span>
-    </div>
-    <div class="header-stats">
-      <span><strong id="hs-tests">0</strong> testeurs</span>
-      <span><strong id="hs-questions">0</strong> retours</span>
-      <span class="mode-pill" id="mode-pill">local</span>
-    </div>
+    <button type="button" class="logo" id="logo-home" aria-label="Retour en haut">
+      <span class="logo-dot">A</span>
+      <span class="logo-title">VOICE AGENT TEST</span>
+    </button>
   </div>
 </header>
 
@@ -35,7 +30,7 @@
 <section class="hero">
   <div class="hero-inner">
     <div class="hero-title">
-      <h1>Testez l'agent vocal Appeldoorn</h1>
+      <h1>Pour tester l'agent Appeldoorn</h1>
       <p>Appelez l'agent depuis le widget ou par téléphone, posez une question, notez la qualité de la réponse. Vos retours alimentent le dashboard temps réel ci-dessous.</p>
     </div>
 
@@ -60,7 +55,7 @@
     <main>
 
       <!-- Tester ID -->
-      <section class="card">
+      <section class="card card--solid">
         <div class="card-head">
           <div class="card-head-text">
             <h2 id="head-tester"><!-- icon injected --> Votre identité de test</h2>
@@ -121,7 +116,7 @@
 
     <!-- ───────── ASIDE (desktop only) ───────── -->
     <aside>
-      <section class="card">
+      <section class="card card--solid">
         <div class="card-head">
           <div class="card-head-text">
             <h2 id="head-actions"><!-- icon injected --> Actions</h2>
