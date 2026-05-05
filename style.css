@@ -187,9 +187,8 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
   text-shadow: 0 2px 16px rgba(0, 80, 180, 0.20), 0 1px 2px rgba(0, 60, 140, 0.15);
 }
 .hero-title p {
-  font-size: 14px; color: rgba(255, 255, 255, 0.85); margin: 0;
+  font-size: 14px; color: #4a4a52; margin: 0;
   max-width: 620px; line-height: 1.5;
-  text-shadow: 0 1px 2px rgba(0, 60, 140, 0.10);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -234,7 +233,8 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
   padding: 0;
 }
 /* On mobile, span-4 = full width (both cols), span-2 = half (1 col) */
-.dash-tile.span-4 { grid-column: 1 / -1; }
+.dash-tile.span-4,
+.dash-section.span-4 { grid-column: 1 / -1; }
 .dash-tile.dist-hero { grid-column: 1 / -1; }
 .dash-tile {
   position: relative;
@@ -402,10 +402,9 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 .dash-section-sub {
   font-size: 11px; font-weight: 700; letter-spacing: 0.10em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.85);
+  color: #4a4a52;
   padding: 0 4px;
   margin-top: -4px;
-  text-shadow: 0 1px 4px rgba(0, 60, 140, 0.18);
 }
 .donut-wrap { display: flex; align-items: center; gap: 16px; flex: 1; }
 .donut {
@@ -561,9 +560,8 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 .card-head h2 .ic { stroke: white !important; opacity: 0.95; }
 .card-head p {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.85);
+  color: #4a4a52;
   margin: 4px 0 0;
-  text-shadow: 0 1px 3px rgba(0, 60, 140, 0.15);
 }
 /* Default : body transparent, le contenu (personas, questions, search) gère son propre glass */
 .card-body {
@@ -642,36 +640,39 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
   line-height: 1.45; margin-bottom: 10px;
 }
 
-/* ───── MOBILE : effet "stacked deck" — chaque persona overlap la précédente ───── */
+/* ───── MOBILE : scroll-stack — chaque persona se cale sur la précédente au scroll ───── */
 @media (max-width: 719px) {
   .persona-grid {
+    display: flex;
+    flex-direction: column;
     gap: 0;
-    position: relative;
+    /* Permet au sticky d'opérer dans les bornes de la grid */
   }
   .persona {
-    margin-top: -36px;        /* overlap visible */
-    transition: transform 0.25s ease, margin 0.25s ease, z-index 0s 0s;
+    position: sticky;
+    /* Chaque carte conserve son empreinte normale dans le flux ;
+       quand on scrolle, elle se "pose" au-dessus de la précédente
+       grâce à un top staggéré + z-index croissant. */
+    margin-bottom: 18px;
+    transition: box-shadow 0.25s ease;
+    /* La hauteur des cartes en flux fournit la distance de scroll */
   }
-  .persona:first-child { margin-top: 0; }
-  /* Each successive card sits slightly higher in z-index so the bottom shows */
-  .persona:nth-child(1)  { z-index: 1; }
-  .persona:nth-child(2)  { z-index: 2; }
-  .persona:nth-child(3)  { z-index: 3; }
-  .persona:nth-child(4)  { z-index: 4; }
-  .persona:nth-child(5)  { z-index: 5; }
-  .persona:nth-child(6)  { z-index: 6; }
-  .persona:nth-child(7)  { z-index: 7; }
-  .persona:nth-child(8)  { z-index: 8; }
-  .persona:nth-child(9)  { z-index: 9; }
-  .persona:nth-child(10) { z-index: 10; }
-  /* Tap to expand : the card slides up to reveal full content */
-  .persona:focus-within,
-  .persona:hover,
+  /* z-index croissant : la carte la plus récente passe par-dessus */
+  .persona:nth-child(1)  { top: 110px; z-index: 1; }
+  .persona:nth-child(2)  { top: 124px; z-index: 2; }
+  .persona:nth-child(3)  { top: 138px; z-index: 3; }
+  .persona:nth-child(4)  { top: 152px; z-index: 4; }
+  .persona:nth-child(5)  { top: 166px; z-index: 5; }
+  .persona:nth-child(6)  { top: 180px; z-index: 6; }
+  .persona:nth-child(7)  { top: 194px; z-index: 7; }
+  .persona:nth-child(8)  { top: 208px; z-index: 8; }
+  .persona:nth-child(9)  { top: 222px; z-index: 9; }
+  .persona:nth-child(10) { top: 236px; z-index: 10; }
+  /* Quand une persona vient de se "stick", on renforce l'ombre pour signaler la profondeur */
+  .persona { box-shadow: 0 12px 36px rgba(10, 80, 160, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.7); }
   .persona.has-expanded {
-    margin-top: 0;
     z-index: 100;
-    transform: translateY(-4px);
-    box-shadow: 0 18px 50px rgba(10, 80, 160, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    box-shadow: 0 22px 60px rgba(10, 80, 160, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.85);
   }
 }
 
@@ -914,8 +915,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
 
 footer {
   text-align: center; font-size: 12px;
-  color: rgba(255, 255, 255, 0.75);
-  text-shadow: 0 1px 4px rgba(0, 60, 140, 0.18);
+  color: #4a4a52;
   padding: 24px 16px 40px;
 }
 
@@ -955,9 +955,12 @@ footer {
     grid-template-columns: repeat(4, 1fr);
     gap: 14px;
   }
-  .dash-tile.span-2 { grid-column: span 2; }
-  .dash-tile.span-3 { grid-column: span 3; }
-  .dash-tile.span-4 { grid-column: 1 / -1; }
+  .dash-tile.span-2,
+  .dash-section.span-2 { grid-column: span 2; }
+  .dash-tile.span-3,
+  .dash-section.span-3 { grid-column: span 3; }
+  .dash-tile.span-4,
+  .dash-section.span-4 { grid-column: 1 / -1; }
   .dash-tile.dist-hero { grid-column: 1 / -1; }
 
   .kpi-tile .value { font-size: 44px; }
