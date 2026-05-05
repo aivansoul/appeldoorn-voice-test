@@ -60,6 +60,16 @@
     trick:       { label: 'Trick',               color: 'cat-trick',       icon: 'alert' }
   };
 
+  // ───── Color class per category (used by category bars) ─────
+  const CAT_COLOR_CLASS = {
+    appeldoorn:  'cat-color-appeldoorn',
+    crelan_part: 'cat-color-crelan_part',
+    crelan_pro:  'cat-color-crelan_pro',
+    crelan_coop: 'cat-color-crelan_coop',
+    assurance:   'cat-color-assurance',
+    trick:       'cat-color-trick'
+  };
+
   // ───── State ─────
   const state = {
     tester: localStorage.getItem('appeldoorn_tester') || '',
@@ -462,21 +472,18 @@
     const counts = { good: 0, medium: 0, missing: 0, halluc: 0, tech: 0, not_asked: 0 };
     all.forEach(r => { counts[r.rating] = (counts[r.rating] || 0) + 1; });
 
-    const goodPct = total ? Math.round(counts.good / total * 100) : 0;
-    const coveragePct = Math.round(total / QUESTIONS.length * 100);
     const testers = Object.keys(state.aggregate.byTester).length;
 
-    // ───── HERO STAT TILE (full width, big number) ─────
-    grid.appendChild(heroStatTile(goodPct, counts, total, testers, coveragePct));
+    // ───── 1. DISTRIBUTION HERO (3 anneaux concentriques style Apple Watch) ─────
+    grid.appendChild(distributionHeroTile(counts, total, testers));
 
-    // ───── BENTO 2x2 of KPI mini tiles ─────
-    grid.appendChild(kpiTile('list',  'azure',  'Q. testées', total, 'sur ' + QUESTIONS.length + ' (' + coveragePct + '%)'));
+    // ───── 2. BENTO 2x2 KPIs (sous la distribution) ─────
+    grid.appendChild(kpiTile('list',  'azure',  'Q. testées', total, total ? 'sur ' + QUESTIONS.length : 'aucune encore'));
     grid.appendChild(kpiTile('user',  'azure',  'Testeurs',   testers, testers > 1 ? 'actifs' : (testers === 1 ? 'actif' : '—')));
     grid.appendChild(kpiTile('help',  'orange', "Pas d'info", counts.missing, 'aurait dû savoir'));
-    grid.appendChild(kpiTile('alert', 'red',    'Pb sérieux', counts.halluc + counts.tech, counts.halluc + ' halluc. + ' + counts.tech + ' tech'));
+    grid.appendChild(kpiTile('alert', 'red',    'Pb sérieux', counts.halluc + counts.tech, counts.halluc + ' halluc. · ' + counts.tech + ' tech'));
 
-    // ───── Charts (full width on mobile, 2 cols on desktop) ─────
-    grid.appendChild(donutTile(counts, total));
+    // ───── 3. Bars catégories (style image 2 — chaque thème sa couleur) ─────
     grid.appendChild(qualityBarTile(rows));
     grid.appendChild(coverageBarTile(rows));
     grid.appendChild(testersTile());
@@ -491,146 +498,167 @@
     }
   }
 
-  // ───── HERO STAT — gros chiffre style « Steps 1265 » ─────
-  function heroStatTile(goodPct, counts, total, testers, coveragePct) {
-    // Choisit le meilleur indicateur selon l'avancement
-    let bigValue, bigUnit, label, subText, barPct;
-    if (total === 0) {
-      bigValue = '0';
-      bigUnit = '/ ' + QUESTIONS.length;
-      label = 'Questions testées';
-      subText = 'Lancez votre premier test pour voir la performance';
-      barPct = 0;
-    } else {
-      bigValue = goodPct;
-      bigUnit = '%';
-      label = 'Performance globale';
-      const goodN = counts.good || 0;
-      const medN = counts.medium || 0;
-      subText = goodN + ' « bien » sur ' + total + ' questions notées · ' + medN + ' « moyen »';
-      barPct = goodPct;
-    }
+  // ═══════════════════════════════════════════════════════════
+  // DISTRIBUTION HERO — 3 anneaux concentriques (Apple Watch style)
+  // ═══════════════════════════════════════════════════════════
+  function distributionHeroTile(counts, total, testers) {
+    const goodN    = counts.good || 0;
+    const mediumN  = counts.medium || 0;
+    const badN     = (counts.missing || 0) + (counts.halluc || 0) + (counts.tech || 0);
+    const goodPct  = total ? Math.round(goodN / total * 100) : 0;
+    const medPct   = total ? Math.round(mediumN / total * 100) : 0;
+    const badPct   = total ? Math.round(badN / total * 100) : 0;
 
-    const tile = el('div', { class: 'dash-tile hero-stat' });
+    const tile = el('div', { class: 'dash-tile dist-hero span-4' });
 
-    // Head: label + pill testeurs
-    const head = el('div', { class: 'hero-stat-head' });
-    const labelEl = el('div', { class: 'hero-stat-label' }, [
-      svgIconNode('check', 'ic-sm'), document.createTextNode(label)
-    ]);
-    head.appendChild(labelEl);
-    const pillText = testers === 0
-      ? coveragePct + '% couvert'
-      : (testers + ' testeur' + (testers > 1 ? 's' : '') + ' · ' + coveragePct + '% couvert');
-    head.appendChild(el('div', { class: 'hero-stat-pill', text: pillText }));
+    // Head : « TODAY » pill + total
+    const head = el('div', { class: 'dist-head' });
+    head.appendChild(el('div', { class: 'dist-pill', text: 'DISTRIBUTION' }));
+    const totalWrap = el('div', { class: 'dist-total' });
+    totalWrap.appendChild(svgIconNode('list', 'ic-sm'));
+    totalWrap.appendChild(document.createTextNode('Notées '));
+    totalWrap.appendChild(el('span', { class: 'num', text: String(total) }));
+    head.appendChild(totalWrap);
     tile.appendChild(head);
 
-    // Big number
-    const bigWrap = el('div', { class: 'hero-stat-value' });
-    bigWrap.appendChild(el('span', { class: 'big', text: String(bigValue) }));
-    bigWrap.appendChild(el('span', { class: 'unit', text: bigUnit }));
-    tile.appendChild(bigWrap);
+    // Body : stats à gauche + 3 rings à droite
+    const body = el('div', { class: 'dist-body' });
 
-    tile.appendChild(el('div', { class: 'hero-stat-sub', text: subText }));
+    // Left: 3 stacked stats
+    const stats = el('div', { class: 'dist-stats' });
+    stats.appendChild(makeDistStat('good',   goodN,   goodPct, 'Bien répondu'));
+    stats.appendChild(makeDistStat('medium', mediumN, medPct,  'Moyen'));
+    stats.appendChild(makeDistStat('bad',    badN,    badPct,  'Pb sérieux'));
+    body.appendChild(stats);
 
-    // Progress bar
-    const bar = el('div', { class: 'hero-stat-bar' });
-    bar.appendChild(el('div', { class: 'hero-stat-bar-fill', style: 'width:' + Math.max(0, Math.min(100, barPct)) + '%' }));
-    tile.appendChild(bar);
+    // Right: 3 SVG concentric rings
+    const rings = el('div', { class: 'dist-rings' });
+    rings.innerHTML = buildRingsSVG(goodPct, medPct, badPct, total);
+    body.appendChild(rings);
 
+    tile.appendChild(body);
     return tile;
   }
 
+  function makeDistStat(kind, n, pct, label) {
+    const stat = el('div', { class: 'dist-stat ' + kind });
+    const v = el('div', { class: 'v' });
+    v.appendChild(document.createTextNode(String(n)));
+    if (n > 0) v.appendChild(el('span', { class: 'pct', text: ' · ' + pct + '%' }));
+    stat.appendChild(v);
+    const l = el('div', { class: 'l' });
+    l.appendChild(el('span', { class: 'swatch' }));
+    l.appendChild(document.createTextNode(label));
+    stat.appendChild(l);
+    return stat;
+  }
+
+  function buildRingsSVG(goodPct, medPct, badPct, total) {
+    // 3 concentric rings (outer = good/green, middle = medium/orange, inner = bad/red)
+    const config = [
+      { r: 70, sw: 16, color: 'var(--green)',  pct: goodPct, key: 'good'   },
+      { r: 50, sw: 16, color: 'var(--orange)', pct: medPct,  key: 'medium' },
+      { r: 30, sw: 16, color: 'var(--red)',    pct: badPct,  key: 'bad'    }
+    ];
+    let svg = '<svg viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">';
+    config.forEach(c => {
+      const circ = 2 * Math.PI * c.r;
+      const dash = total ? circ * (c.pct / 100) : 0;
+      const off  = total ? circ - dash : circ;
+      // Track
+      svg += '<circle class="dist-ring-track" cx="90" cy="90" r="' + c.r +
+             '" stroke="' + c.color + '" stroke-opacity="0.18" stroke-width="' + c.sw + '" />';
+      // Fill (only render if there's a value)
+      if (total > 0 && c.pct > 0) {
+        svg += '<circle class="dist-ring-fill" cx="90" cy="90" r="' + c.r +
+               '" stroke="' + c.color + '" stroke-width="' + c.sw +
+               '" stroke-dasharray="' + circ.toFixed(1) +
+               '" stroke-dashoffset="' + off.toFixed(1) + '" />';
+      }
+    });
+    svg += '</svg>';
+    return svg;
+  }
+
   function kpiTile(icon, color, label, value, sub) {
-    return el('div', { class: 'dash-tile kpi-tile ' + color }, [
+    return el('div', { class: 'dash-tile kpi-tile span-2 ' + color }, [
       el('div', { class: 'label' }, [svgIconNode(icon, 'ic-sm'), document.createTextNode(label)]),
       el('div', { class: 'value', text: String(value) }),
       el('div', { class: 'sub', text: sub })
     ]);
   }
 
-  function donutTile(counts, total) {
-    const palette = {
-      good: 'var(--green)', medium: 'var(--orange)',
-      missing: 'var(--azure-deep)', halluc: 'var(--red)',
-      tech: '#a31b13', not_asked: 'var(--line)'
-    };
-    const order = ['good', 'medium', 'missing', 'halluc', 'tech'];
-    const sum = order.reduce((a, k) => a + (counts[k] || 0), 0);
-    let pct = 0;
-    const stops = [];
-    if (sum === 0) {
-      stops.push('var(--bg-2) 0deg 360deg');
-    } else {
-      order.forEach(k => {
-        const v = counts[k] || 0;
-        if (v === 0) return;
-        const start = pct * 3.6;
-        pct += v / sum * 100;
-        const end = pct * 3.6;
-        stops.push(palette[k] + ' ' + start + 'deg ' + end + 'deg');
-      });
-    }
-    const tile = el('div', { class: 'dash-tile dash-chart span-2' }, [
-      el('div', { class: 'dash-chart-title', text: 'Distribution des notes' })
-    ]);
-    const wrap = el('div', { class: 'donut-wrap' });
-    const donut = el('div', { class: 'donut' });
-    donut.style.background = 'conic-gradient(' + stops.join(', ') + ')';
-    const center = el('div', { class: 'donut-center' }, [
-      el('div', { class: 'v', text: total ? Math.round((counts.good || 0) / total * 100) + '%' : '—' }),
-      el('div', { class: 'l', text: 'BIEN' })
-    ]);
-    donut.appendChild(center);
-    wrap.appendChild(donut);
-
-    const legend = el('div', { class: 'donut-legend' });
-    const labels = { good: 'Bien', medium: 'Moyen', missing: "Pas d'info", halluc: 'Hallucine', tech: 'Pb tech.' };
-    order.forEach(k => {
-      const v = counts[k] || 0;
-      if (v === 0 && total > 0) return;
-      legend.appendChild(el('div', { class: 'row' }, [
-        el('span', { class: 'swatch', style: 'background:' + palette[k] }),
-        document.createTextNode(labels[k]),
-        el('strong', { text: String(v) })
-      ]));
-    });
-    wrap.appendChild(legend);
-    tile.appendChild(wrap);
-    return tile;
-  }
-
+  // ═══════════════════════════════════════════════════════════
+  // CATEGORY BARS (style image 2 — icone + bar coloré + count)
+  // ═══════════════════════════════════════════════════════════
   function qualityBarTile(rows) {
     const tile = el('div', { class: 'dash-tile dash-chart span-2' }, [
-      el('div', { class: 'dash-chart-title', text: 'Qualité par thème (% bien)' })
+      el('div', { class: 'dash-chart-title', text: 'Qualité par thème' }),
+      el('div', { class: 'dash-chart-sub',   text: '% « BIEN » SUR LES QUESTIONS NOTÉES' })
     ]);
+    const list = el('div', { class: 'cat-list' });
     Object.keys(CATS).forEach(catKey => {
       const inCat = rows.filter(r => r.category === catKey);
       const goodCat = inCat.filter(r => r.rating === 'good').length;
       const pct = inCat.length ? Math.round(goodCat / inCat.length * 100) : 0;
-      const colorClass = inCat.length === 0 ? '' : (pct >= 75 ? 'green' : (pct >= 50 ? 'orange' : 'red'));
-      tile.appendChild(barRow(CATS[catKey].label, pct, inCat.length === 0 ? '—' : (pct + '%'), colorClass));
+      list.appendChild(catBarRow({
+        catKey,
+        label: CATS[catKey].label,
+        valueLabel: inCat.length === 0 ? '—' : (pct + '%'),
+        widthPct: inCat.length === 0 ? 14 : Math.max(20, pct), // min visible width
+        empty: inCat.length === 0
+      }));
     });
+    tile.appendChild(list);
     return tile;
   }
 
   function coverageBarTile(rows) {
     const tile = el('div', { class: 'dash-tile dash-chart span-2' }, [
-      el('div', { class: 'dash-chart-title', text: 'Couverture par thème' })
+      el('div', { class: 'dash-chart-title', text: 'Couverture par thème' }),
+      el('div', { class: 'dash-chart-sub',   text: 'QUESTIONS TESTÉES / DISPONIBLES' })
     ]);
+    const list = el('div', { class: 'cat-list' });
     Object.keys(CATS).forEach(catKey => {
       const totalCat = QUESTIONS.filter(q => q.cat === catKey).length;
       const askedSet = {};
       rows.forEach(r => { if (r.category === catKey) askedSet[r.question_id] = true; });
       const askedCat = Object.keys(askedSet).length;
       const pct = totalCat ? Math.round(askedCat / totalCat * 100) : 0;
-      tile.appendChild(barRow(CATS[catKey].label, pct, askedCat + '/' + totalCat, ''));
+      list.appendChild(catBarRow({
+        catKey,
+        label: CATS[catKey].label,
+        valueLabel: askedCat + ' / ' + totalCat,
+        widthPct: askedCat === 0 ? 14 : Math.max(20, pct),
+        empty: askedCat === 0
+      }));
     });
+    tile.appendChild(list);
     return tile;
   }
 
+  // Single category bar row (image 2 style)
+  function catBarRow(opts) {
+    const cat = CATS[opts.catKey] || { label: opts.label, icon: 'list' };
+    const colorClass = CAT_COLOR_CLASS[opts.catKey] || '';
+    const wrap = el('div', { class: 'cat-row ' + (opts.empty ? 'empty' : '') });
+    wrap.appendChild(el('div', { class: 'cat-label', text: cat.label.toUpperCase() }));
+    const barWrap = el('div', { class: 'cat-bar-wrap' });
+    const fill = el('div', {
+      class: 'cat-bar-fill ' + colorClass,
+      style: 'width:' + opts.widthPct + '%'
+    });
+    const iconBubble = el('div', { class: 'cat-icon' });
+    iconBubble.appendChild(svgIconNode(cat.icon, 'ic-sm'));
+    fill.appendChild(iconBubble);
+    barWrap.appendChild(fill);
+    barWrap.appendChild(el('span', { class: 'cat-count', text: opts.valueLabel }));
+    wrap.appendChild(barWrap);
+    return wrap;
+  }
+
   function testersTile() {
-    const tile = el('div', { class: 'dash-tile dash-chart span-2' }, [
+    const tile = el('div', { class: 'dash-tile dash-chart span-4' }, [
       el('div', { class: 'dash-chart-title', text: 'Top testeurs' })
     ]);
     const list = el('div', { class: 'testers-list' });
@@ -653,7 +681,7 @@
     return tile;
   }
 
-  function barRow(label, pct, valueLabel, colorClass) {
+  function _legacy_barRow_unused(label, pct, valueLabel, colorClass) {
     return el('div', { class: 'bar-row' }, [
       el('span', { class: 'bar-label', text: label }),
       el('div', { class: 'bar-track' }, [
