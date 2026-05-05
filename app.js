@@ -450,7 +450,7 @@
     }
   }
 
-  // ───── Dashboard render (Power BI style) ─────
+  // ───── Dashboard render (Glassmorphic bento) ─────
   function renderDashboard() {
     const grid = $('#dash-grid');
     clear(grid);
@@ -463,25 +463,22 @@
     all.forEach(r => { counts[r.rating] = (counts[r.rating] || 0) + 1; });
 
     const goodPct = total ? Math.round(counts.good / total * 100) : 0;
+    const coveragePct = Math.round(total / QUESTIONS.length * 100);
     const testers = Object.keys(state.aggregate.byTester).length;
-    const callbackOK = rows.filter(r => /callback/i.test((QUESTIONS.find(q => q.id === r.question_id) || {}).expect || '')).length;
 
-    // 4 KPI tiles
-    grid.appendChild(kpiTile('list',  'azure',  'Q. testées', total, '/ ' + QUESTIONS.length + ' (' + Math.round(total/QUESTIONS.length*100) + '%)'));
-    grid.appendChild(kpiTile('check', 'green',  'Bien répondu', goodPct + '%', counts.good + ' bien · ' + counts.medium + ' moyen'));
+    // ───── HERO STAT TILE (full width, big number) ─────
+    grid.appendChild(heroStatTile(goodPct, counts, total, testers, coveragePct));
+
+    // ───── BENTO 2x2 of KPI mini tiles ─────
+    grid.appendChild(kpiTile('list',  'azure',  'Q. testées', total, 'sur ' + QUESTIONS.length + ' (' + coveragePct + '%)'));
+    grid.appendChild(kpiTile('user',  'azure',  'Testeurs',   testers, testers > 1 ? 'actifs' : (testers === 1 ? 'actif' : '—')));
     grid.appendChild(kpiTile('help',  'orange', "Pas d'info", counts.missing, 'aurait dû savoir'));
     grid.appendChild(kpiTile('alert', 'red',    'Pb sérieux', counts.halluc + counts.tech, counts.halluc + ' halluc. + ' + counts.tech + ' tech'));
 
-    // Donut: distribution of ratings
+    // ───── Charts (full width on mobile, 2 cols on desktop) ─────
     grid.appendChild(donutTile(counts, total));
-
-    // Bar chart: quality per category
     grid.appendChild(qualityBarTile(rows));
-
-    // Bar chart: coverage per category
     grid.appendChild(coverageBarTile(rows));
-
-    // Tester leaderboard
     grid.appendChild(testersTile());
 
     // Status
@@ -494,9 +491,59 @@
     }
   }
 
+  // ───── HERO STAT — gros chiffre style « Steps 1265 » ─────
+  function heroStatTile(goodPct, counts, total, testers, coveragePct) {
+    // Choisit le meilleur indicateur selon l'avancement
+    let bigValue, bigUnit, label, subText, barPct;
+    if (total === 0) {
+      bigValue = '0';
+      bigUnit = '/ ' + QUESTIONS.length;
+      label = 'Questions testées';
+      subText = 'Lancez votre premier test pour voir la performance';
+      barPct = 0;
+    } else {
+      bigValue = goodPct;
+      bigUnit = '%';
+      label = 'Performance globale';
+      const goodN = counts.good || 0;
+      const medN = counts.medium || 0;
+      subText = goodN + ' « bien » sur ' + total + ' questions notées · ' + medN + ' « moyen »';
+      barPct = goodPct;
+    }
+
+    const tile = el('div', { class: 'dash-tile hero-stat' });
+
+    // Head: label + pill testeurs
+    const head = el('div', { class: 'hero-stat-head' });
+    const labelEl = el('div', { class: 'hero-stat-label' }, [
+      svgIconNode('check', 'ic-sm'), document.createTextNode(label)
+    ]);
+    head.appendChild(labelEl);
+    const pillText = testers === 0
+      ? coveragePct + '% couvert'
+      : (testers + ' testeur' + (testers > 1 ? 's' : '') + ' · ' + coveragePct + '% couvert');
+    head.appendChild(el('div', { class: 'hero-stat-pill', text: pillText }));
+    tile.appendChild(head);
+
+    // Big number
+    const bigWrap = el('div', { class: 'hero-stat-value' });
+    bigWrap.appendChild(el('span', { class: 'big', text: String(bigValue) }));
+    bigWrap.appendChild(el('span', { class: 'unit', text: bigUnit }));
+    tile.appendChild(bigWrap);
+
+    tile.appendChild(el('div', { class: 'hero-stat-sub', text: subText }));
+
+    // Progress bar
+    const bar = el('div', { class: 'hero-stat-bar' });
+    bar.appendChild(el('div', { class: 'hero-stat-bar-fill', style: 'width:' + Math.max(0, Math.min(100, barPct)) + '%' }));
+    tile.appendChild(bar);
+
+    return tile;
+  }
+
   function kpiTile(icon, color, label, value, sub) {
     return el('div', { class: 'dash-tile kpi-tile ' + color }, [
-      el('div', { class: 'label' }, [svgIconNode(icon, 'ic-sm ic-' + (color === 'azure' ? 'azure' : 'grey')), document.createTextNode(label)]),
+      el('div', { class: 'label' }, [svgIconNode(icon, 'ic-sm'), document.createTextNode(label)]),
       el('div', { class: 'value', text: String(value) }),
       el('div', { class: 'sub', text: sub })
     ]);
