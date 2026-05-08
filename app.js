@@ -159,13 +159,46 @@
 
   // ───── Tester block ─────
   // Le canal est figé à « phone » (UI nettoyée) — on ne lit plus #tester-channel.
+  // Auto-reset des retours locaux quand le testeur change de prénom : on
+  // n'attend plus que l'utilisateur clique « reset », c'est implicite dès
+  // qu'un nouveau nom est saisi (et stable >800ms pour ne pas reset à chaque
+  // frappe). Les retours déjà partagés en DB restent intacts.
   function bindTester() {
     const nameInput = $('#tester-name');
     nameInput.value = state.tester;
+    let prevTester = state.tester;
+    let debounceT = null;
     nameInput.addEventListener('input', e => {
-      state.tester = e.target.value.trim();
-      localStorage.setItem('appeldoorn_tester', state.tester);
+      const next = e.target.value.trim();
+      state.tester = next;
+      localStorage.setItem('appeldoorn_tester', next);
+      clearTimeout(debounceT);
+      debounceT = setTimeout(() => {
+        // Si on est passé d'un nom A non vide à un nom B différent non vide,
+        // ou de vide → nouveau nom, on remet à zéro l'état local.
+        if (next && next !== prevTester) {
+          autoResetLocal({ silent: prevTester === '' });
+          prevTester = next;
+        }
+      }, 800);
     });
+  }
+
+  // Reset local silencieux — pas de confirm, pas de prompt. Les questions
+  // ouvertes se referment, les ratings locaux sont vidés. La DB partagée
+  // n'est PAS touchée (l'utilisateur peut continuer sans perdre les rangées
+  // déjà postées par d'autres testeurs).
+  function autoResetLocal(opts) {
+    state.localFeedback = {};
+    state.expandedInPersona = {};
+    localStorage.removeItem('appeldoorn_local_feedback');
+    if (!SHARED) localStorage.removeItem('appeldoorn_events');
+    recomputeLocalAggregate();
+    renderPersonas();
+    renderQuestions();
+    renderDashboard();
+    renderHeaderStats();
+    if (!opts || !opts.silent) banner('Nouveau testeur — état local réinitialisé');
   }
 
   // ───── Personas ─────
@@ -774,35 +807,77 @@
     }
   }
 
-  // ───── Export / reset ─────
-  function exportCSV() {
-    const rows = state.aggregate.rows;
-    if (rows.length === 0) { banner('Pas de données à exporter'); return; }
-    const headers = ['tester', 'channel', 'question_id', 'category', 'rating', 'created_at'];
-    const lines = [headers.join(',')];
-    rows.forEach(r => {
-      lines.push(headers.map(h => '"' + String(r[h] == null ? '' : r[h]).replace(/"/g, '""') + '"').join(','));
-    });
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = el('a', { href: url, download: 'appeldoorn_feedback_' + new Date().toISOString().slice(0, 10) + '.csv' });
-    document.body.appendChild(a); a.click(); a.remove();
-    URL.revokeObjectURL(url);
-    banner('CSV téléchargé');
-  }
+  // ───── Envoi des résultats par email (webhook n8n → Outlook → Lana) ─────
+  // POST /webhook/feedback-send sur n8n.cloud. Le payload contient :
+  //   - tester (prénom)
+  //   - submitted_at (ISO)
+  //   - results : [{question_id, q_text, category, rating, rating_label}]
+  // On n'envoie QUE les notes du testeur courant (filtre par state.tester),
+  // pour éviter d'expédier l'agrégat global à chaque clic.
+  const FEEDBACK_WEBHOOK_URL = 'https://aiforcestudio.app.n8n.cloud/webhook/feedback-send';
 
-  function resetLocal() {
-    if (!confirm('Réinitialiser tes retours locaux ? Cela ne supprime pas les données déjà partagées.')) return;
-    state.localFeedback = {};
-    state.expandedInPersona = {};
-    localStorage.removeItem('appeldoorn_local_feedback');
-    if (!SHARED) localStorage.removeItem('appeldoorn_events');
-    recomputeLocalAggregate();
-    renderPersonas();
-    renderQuestions();
-    renderDashboard();
-    renderHeaderStats();
-    banner('Reset effectué');
+  async function sendResults() {
+    const tester = (state.tester || '').trim();
+    if (!tester) {
+      banner('Renseignez votre prénom avant d\'envoyer');
+      const inp = $('#tester-name');
+      if (inp) { inp.focus(); inp.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      return;
+    }
+
+    // On prend les notes du testeur courant uniquement (et on ignore not_asked
+    // car ça ne reflète pas une réponse de l'agent).
+    const myRows = state.aggregate.rows.filter(r =>
+      (r.tester || '').toLowerCase() === tester.toLowerCase() && r.rating && r.rating !== 'not_asked'
+    );
+
+    if (myRows.length === 0) {
+      banner('Aucune note à envoyer pour le moment');
+      return;
+    }
+
+    // Mappe chaque rating sur question + libellé lisible
+    const RATING_LABEL = {
+      good: 'BIEN', medium: 'MOYEN', missing: 'MANQUE',
+      halluc: 'HALLUCINATION', tech: 'TECH', not_asked: 'PAS POSÉ'
+    };
+    const results = myRows.map(r => {
+      const q = QUESTIONS.find(x => x.id === r.question_id);
+      return {
+        question_id: r.question_id,
+        q_text: q ? q.q : '',
+        category: r.category,
+        rating: r.rating,
+        rating_label: RATING_LABEL[r.rating] || r.rating
+      };
+    });
+
+    const btn = $('#btn-send');
+    if (btn) { btn.disabled = true; btn.classList.add('is-loading'); }
+    banner('Envoi en cours…');
+
+    try {
+      const res = await fetch(FEEDBACK_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tester,
+          submitted_at: new Date().toISOString(),
+          results
+        })
+      });
+      if (!res.ok) throw new Error('Webhook ' + res.status);
+      const data = await res.json().catch(() => ({}));
+      const pct = (data && typeof data.pct_good === 'number') ? data.pct_good : null;
+      banner(pct != null
+        ? `✓ Résultats envoyés à l'équipe (${results.length} questions, ${pct}% bien)`
+        : `✓ Résultats envoyés à l'équipe (${results.length} questions)`);
+    } catch (e) {
+      console.error(e);
+      banner('⚠ Échec de l\'envoi — réessayez dans un instant');
+    } finally {
+      if (btn) { btn.disabled = false; btn.classList.remove('is-loading'); }
+    }
   }
 
   // ───── Init ─────
@@ -820,8 +895,8 @@
       state.search = e.target.value;
       renderQuestions();
     });
-    $('#btn-export').addEventListener('click', exportCSV);
-    $('#btn-reset').addEventListener('click', resetLocal);
+    const btnSend = $('#btn-send');
+    if (btnSend) btnSend.addEventListener('click', sendResults);
 
     await refreshAggregate();
     renderDashboard();
