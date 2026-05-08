@@ -535,7 +535,12 @@
   function distributionHeroTile(counts, total, testers) {
     const goodN    = counts.good || 0;
     const mediumN  = counts.medium || 0;
-    const badN     = (counts.missing || 0) + (counts.halluc || 0) + (counts.tech || 0);
+    // « Pb sérieux » = halluc + tech UNIQUEMENT, pour rester cohérent avec
+    // la KPI tile « Pb sérieux » du bento (qui exclut volontairement les
+    // « missing » — ces dernières sont déjà comptabilisées dans la KPI
+    // « Pas d'info »). Avant : missing + halluc + tech → écart visible
+    // entre la donut (5) et la tile (0) quand il n'y a que des « missing ».
+    const badN     = (counts.halluc || 0) + (counts.tech || 0);
     const goodPct  = total ? Math.round(goodN / total * 100) : 0;
     const medPct   = total ? Math.round(mediumN / total * 100) : 0;
     const badPct   = total ? Math.round(badN / total * 100) : 0;
