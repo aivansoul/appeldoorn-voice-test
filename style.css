@@ -533,12 +533,17 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
   background: #f0f4f8;
   border-radius: 100px;
   padding: 4px;
+  /* Reserve d'espace à droite pour que le compteur (ex « 100% » ou « 12 / 35 »)
+     reste TOUJOURS dans la card, même quand la barre fait 100% de remplissage. */
+  padding-right: 64px;
   position: relative;
   min-height: 44px;
 }
 .cat-row .cat-bar-fill {
   display: flex; align-items: center; gap: 10px;
   height: 36px; min-width: 60px;
+  /* La barre ne peut jamais dépasser la zone de track (padding-right reserve le compteur). */
+  max-width: 100%;
   border-radius: 100px;
   padding-left: 4px; padding-right: 14px;
   transition: width 0.6s cubic-bezier(.2,.7,.2,1);
@@ -558,10 +563,15 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em
   letter-spacing: 0.01em;
 }
 .cat-row .cat-count {
-  margin-left: auto;
+  /* Positionnement absolu sur le bord droit du track : le compteur reste
+     toujours visible et bien aligné, indépendamment de la largeur de la barre. */
+  position: absolute;
+  right: 14px; top: 50%;
+  transform: translateY(-50%);
   font-size: 14px; font-weight: 700;
   color: var(--text); font-variant-numeric: tabular-nums;
-  padding-right: 12px; flex-shrink: 0;
+  flex-shrink: 0;
+  pointer-events: none;
 }
 /* Empty state — icon visible, bar collapsed */
 .cat-row.empty .cat-bar-fill {
@@ -1099,6 +1109,23 @@ footer {
 
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ───── CTA "Enregistrez-vous" — bloc d'inscription bien visible ───── */
+.card--cta .card-head { padding-bottom: 14px; }
+.card--cta .cta-title {
+  /* Plus gros + bold + lettres bien lisibles, alignement icône intact */
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  text-transform: none;
+  text-shadow: 0 2px 18px rgba(0, 80, 180, 0.28), 0 1px 2px rgba(0, 60, 140, 0.18);
+}
+.card--cta .cta-title .ic {
+  width: 22px; height: 22px;
+}
+@media (min-width: 720px) {
+  .card--cta .cta-title { font-size: 32px; }
 }
 
 /* ───── ACCESSIBILITY ───── */

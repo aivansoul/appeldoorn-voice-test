@@ -71,9 +71,12 @@
   };
 
   // ───── State ─────
+  // Note: le sélecteur de canal a été retiré de l'UI — tous les retours sont
+  // implicitement « phone » côté analytique. On garde le champ dans le state
+  // pour préserver la compatibilité avec les rangées historiques en DB.
   const state = {
     tester: localStorage.getItem('appeldoorn_tester') || '',
-    channel: localStorage.getItem('appeldoorn_channel') || 'web',
+    channel: 'phone',
     activeFilter: 'all',
     activeSub: null,
     search: '',
@@ -155,18 +158,13 @@
   }
 
   // ───── Tester block ─────
+  // Le canal est figé à « phone » (UI nettoyée) — on ne lit plus #tester-channel.
   function bindTester() {
     const nameInput = $('#tester-name');
-    const chanSel = $('#tester-channel');
     nameInput.value = state.tester;
-    chanSel.value = state.channel;
     nameInput.addEventListener('input', e => {
       state.tester = e.target.value.trim();
       localStorage.setItem('appeldoorn_tester', state.tester);
-    });
-    chanSel.addEventListener('change', e => {
-      state.channel = e.target.value;
-      localStorage.setItem('appeldoorn_channel', state.channel);
     });
   }
 
@@ -651,7 +649,10 @@
         catKey,
         label: CATS[catKey].label,
         valueLabel: inCat.length === 0 ? '—' : (pct + '%'),
-        widthPct: inCat.length === 0 ? 14 : Math.max(20, pct), // min visible width
+        // Largeur réelle (pas de plancher 20%) : seul un petit min de 6%
+        // garantit la visibilité de l'icône pour les très petites valeurs.
+        // Ratio entre catégories enfin proportionnel.
+        widthPct: inCat.length === 0 ? 6 : Math.max(6, pct),
         empty: inCat.length === 0
       }));
     });
@@ -676,7 +677,8 @@
         catKey,
         label: CATS[catKey].label,
         valueLabel: askedCat + ' / ' + totalCat,
-        widthPct: askedCat === 0 ? 14 : Math.max(20, pct),
+        // Même règle de proportionnalité que la grille « Qualité ».
+        widthPct: askedCat === 0 ? 6 : Math.max(6, pct),
         empty: askedCat === 0
       }));
     });
